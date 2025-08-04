@@ -2,16 +2,20 @@ import express from "express";
 
 const app = express();
 
+app.get("/user", (req, res) => {
+  res.send("User information is shown.");
+});
+
+app.post("/user", (req, res) => {
+  res.send("Data successfully saved in the database.");
+});
+
+app.delete("/user", (req, res) => {
+  res.send("Data successfully deleted from the database.");
+});
+
 app.use("/test", (req, res) => {
   res.send("Hello from the testing server.");
-});
-
-app.use("/hello", (req, res) => {
-  res.send("Hello from the hello page.");
-});
-
-app.use("/", (req, res) => {
-  res.send("Hello from the home page.");
 });
 
 app.listen(3000, () => {
