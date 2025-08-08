@@ -15,7 +15,7 @@ app.post("/signup", async (req, res) => {
   try {
     await user.save();
     res.send("User added successfully");
-  } catch (error) {
+  } catch (err) {
     res.status(400).send("Error while saving the user:" + err.message);
   }
 });
@@ -54,7 +54,7 @@ app.delete("/user", async (req, res) => {
 
 // Update API - PATCH/user - To update the user
 app.patch("/user", async (req, res) => {
-  console.log("Received body:", req.body);
+  // console.log("Received body:", req.body);
   const { emailId, ...updateFields } = req.body;
   try {
     const user = await User.findOne({ emailId: emailId });
@@ -63,6 +63,7 @@ app.patch("/user", async (req, res) => {
     }
     const updatedUser = await User.findByIdAndUpdate(user._id, updateFields, {
       new: true,
+      runValidators: true,
     });
     res
       .status(200)
