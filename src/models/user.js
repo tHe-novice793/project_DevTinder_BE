@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import validator from "validator";
 
 const userSchema = new mongoose.Schema(
   {
@@ -7,6 +8,7 @@ const userSchema = new mongoose.Schema(
       required: true,
       minLength: 4,
       maxLength: 50,
+      trim: true,
       match: [
         /^[A-Za-z\s]+$/,
         "First name must contain only letters and spaces.",
@@ -17,6 +19,7 @@ const userSchema = new mongoose.Schema(
       required: true,
       minLength: 4,
       maxLength: 50,
+      trim: true,
       match: [
         /^[A-Za-z\s]+$/,
         "First name must contain only letters and spaces.",
@@ -28,16 +31,35 @@ const userSchema = new mongoose.Schema(
       unique: true,
       lowercase: true,
       trim: true,
-      match: [/.+@.+\..+/, "Please enter a valid email address."],
+      validate(value) {
+        if (!validator.isEmail(value)) {
+          throw new Error("Invalid email Id");
+        }
+      },
     },
     password: {
       type: String,
       required: true,
       minLength: 6,
+      validate: {
+        validator: function (v) {
+          if (!validator.isStrongPassword(v)) {
+            throw new Error(
+              "Password is not strong. Please enter a strong password"
+            );
+          }
+        },
+      },
     },
     age: {
       type: Number,
       min: 18,
+      validate: {
+        validator: function (v) {
+          return !isNaN(v) && v > 0;
+        },
+        message: "Age must be a valid, positive number.",
+      },
     },
     gender: {
       type: String,
@@ -52,9 +74,10 @@ const userSchema = new mongoose.Schema(
       type: String,
       validate: {
         validator: function (v) {
-          return /^https?:\/\/.+\.(jpg|jpeg|png|gif|webp)$/.test(v);
+          if (!validator.isURL(v)) {
+            throw new Error("Invalid Photo URL: " + v);
+          }
         },
-        message: "Photo URL must be a valid image URL.",
       },
     },
     about: {
@@ -65,9 +88,12 @@ const userSchema = new mongoose.Schema(
       type: [String],
       validate: {
         validator: function (arr) {
-          return arr.length <= 10;
+          return (
+            arr.length <= 10 && arr.every((skill) => typeof skill === "string")
+          );
         },
-        message: "You can specify up to 10 skills only.",
+        message:
+          "You can specify up to 10 skills only, and each skill must be a valid string.",
       },
     },
   },

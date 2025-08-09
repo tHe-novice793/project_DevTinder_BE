@@ -53,14 +53,52 @@ app.delete("/user", async (req, res) => {
 });
 
 // Update API - PATCH/user - To update the user
-app.patch("/user", async (req, res) => {
-  // console.log("Received body:", req.body);
+app.patch("/user/:userId", async (req, res) => {
+  const userId = req.params?.userId;
   const { emailId, ...updateFields } = req.body;
+
+  const allowedUpdates = [
+    "photoUrl",
+    "about",
+    "gender",
+    "about",
+    "age",
+    "skills",
+  ];
+
   try {
-    const user = await User.findOne({ emailId: emailId });
+    // if (updateFields?.skills.length > 10) {
+    //   throw new Error("Skills cannot be more than 10");
+    // }
+    const updateKeys = Object.keys(updateFields);
+
+    const isUpdateAllowed = updateKeys.every((k) => {
+      return allowedUpdates.includes(k);
+    });
+
+    if (!isUpdateAllowed) {
+      return res.status(400).send("Update is not allowed.");
+    }
+
+    const user = await User.findOne({ emailId: emailId.toLowerCase().trim() });
     if (!user) {
       return res.status(404).send("User not found.");
     }
+
+    if (updateFields.skills) {
+      await User.findByIdAndUpdate(
+        user._id,
+        { $addToSet: { skills: { $each: updateFields.skills } } },
+        { new: true, runValidators: true }
+      );
+    } else {
+      // If no 'skills' in updateFields, proceed with regular update
+      await User.findByIdAndUpdate(user._id, updateFields, {
+        new: true,
+        runValidators: true,
+      });
+    }
+
     const updatedUser = await User.findByIdAndUpdate(user._id, updateFields, {
       new: true,
       runValidators: true,
@@ -69,7 +107,8 @@ app.patch("/user", async (req, res) => {
       .status(200)
       .json({ message: "User is updated successfully.", user: updatedUser });
   } catch (err) {
-    res.status(400).send("Something went wrong !!");
+    console.error("Update error:", err.message);
+    res.status(400).send("Something went wrong !!" + err.message);
   }
 });
 
