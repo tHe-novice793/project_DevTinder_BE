@@ -1,7 +1,9 @@
 import express from "express";
+import bcrypt from "bcrypt";
 import { adminAuth, userAuth } from "./middlewares/auth.js";
 import { connectDB } from "./config/database.js";
 import { UserModel } from "./models/user.js";
+import { validateLoginData, validateSignupData } from "./utils/validaton.js";
 
 const app = express();
 const User = UserModel;
@@ -10,13 +12,48 @@ const User = UserModel;
 app.use(express.json());
 
 app.post("/signup", async (req, res) => {
-  const user = new User(req.body);
-
   try {
+    // Validation of data
+    validateSignupData(req);
+
+    // Encrypt the password
+    const { firstName, lastName, emailId, password } = req.body;
+    const paswordHash = await bcrypt.hash(password, 10);
+    console.log(paswordHash);
+
+    const user = new User({
+      firstName,
+      lastName,
+      emailId,
+      password: paswordHash,
+    });
     await user.save();
     res.send("User added successfully");
   } catch (err) {
-    res.status(400).send("Error while saving the user:" + err.message);
+    res.status(400).send("Error while saving the user: " + err.message);
+  }
+});
+
+// Login API - POST/login - To login the user
+app.post("/login", async (req, res) => {
+  try {
+    validateLoginData(req);
+    const { emailId, password } = req.body;
+    const user = await User.findOne({ emailId: emailId });
+
+    console.log(emailId, password);
+    if (!user) {
+      throw new Error("Invalid login credentials");
+    }
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    if (isPasswordValid) {
+      res.send("User login successfull!!!");
+    } else {
+      throw new Error("Invalid login credentials");
+    }
+  } catch (err) {
+    res.status(400).send("Error : " + err.message);
   }
 });
 
@@ -38,7 +75,7 @@ app.get("/feed", async (req, res) => {
 
 // Delete API - DELETE/user - To delete the user
 app.delete("/user", async (req, res) => {
-  const userEmail = req.body.emailId;
+  const userEmail = req.body.emailId.toLowerCase().trim();
   console.log(userEmail);
   try {
     const user = await User.findOne({ emailId: userEmail });
@@ -67,9 +104,6 @@ app.patch("/user/:userId", async (req, res) => {
   ];
 
   try {
-    // if (updateFields?.skills.length > 10) {
-    //   throw new Error("Skills cannot be more than 10");
-    // }
     const updateKeys = Object.keys(updateFields);
 
     const isUpdateAllowed = updateKeys.every((k) => {
