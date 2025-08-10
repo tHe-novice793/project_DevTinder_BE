@@ -1,5 +1,10 @@
 import mongoose from "mongoose";
 import validator from "validator";
+import jwt from "jsonwebtoken";
+import dotenv from "dotenv";
+import bcrypt from "bcrypt";
+
+dotenv.config();
 
 const userSchema = new mongoose.Schema(
   {
@@ -101,6 +106,28 @@ const userSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+userSchema.methods.getJWT = async function () {
+  const user = this;
+
+  const token = await jwt.sign({ _id: user._id }, process.env.SECRET_KEY, {
+    expiresIn: "7d",
+  });
+
+  return token;
+};
+
+userSchema.methods.validatePassword = async function (passwordInputByUser) {
+  const user = this;
+  const passwordHash = user.password;
+
+  const isPasswordValid = await bcrypt.compare(
+    passwordInputByUser,
+    passwordHash
+  );
+
+  return isPasswordValid;
+};
 
 const UserModel = mongoose.model("User", userSchema);
 
