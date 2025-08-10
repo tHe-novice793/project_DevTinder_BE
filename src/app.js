@@ -1,15 +1,21 @@
 import express from "express";
 import bcrypt from "bcrypt";
-import { adminAuth, userAuth } from "./middlewares/auth.js";
+import { userAuth } from "./middlewares/auth.js";
 import { connectDB } from "./config/database.js";
 import { UserModel } from "./models/user.js";
 import { validateLoginData, validateSignupData } from "./utils/validaton.js";
+import cookieParser from "cookie-parser";
+import jwt from "jsonwebtoken";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const app = express();
 const User = UserModel;
 // const connectDB = connectDB();
 
 app.use(express.json());
+app.use(cookieParser());
 
 app.post("/signup", async (req, res) => {
   try {
@@ -41,14 +47,21 @@ app.post("/login", async (req, res) => {
     const { emailId, password } = req.body;
     const user = await User.findOne({ emailId: emailId });
 
-    console.log(emailId, password);
     if (!user) {
       throw new Error("Invalid login credentials");
     }
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (isPasswordValid) {
-      res.send("User login successfull!!!");
+      const token = await jwt.sign({ _id: user._id }, process.env.SECRET_KEY, {
+        expiresIn: "7d",
+      });
+
+      res.cookie("token", token, {
+        expires: new Date(Date.now() + 7 * 24 * 3600000),
+      });
+
+      res.send("User login successfull!!! Hello " + user.firstName);
     } else {
       throw new Error("Invalid login credentials");
     }
@@ -57,93 +70,22 @@ app.post("/login", async (req, res) => {
   }
 });
 
-// Feed API - GET/feed - To get all the users from the database
-app.get("/feed", async (req, res) => {
-  // const userEmailId = req.body.emailId;
-
+app.get("/profile", userAuth, async (req, res) => {
   try {
-    const users = await User.find({});
-    if (!users.length) {
-      res.status(404).send("User not found");
-    } else {
-      res.send(users);
+    const user = req.user;
+    if (!user) {
+      throw new Error("User does not exist");
     }
+    res.send("User is : " + user);
   } catch (err) {
-    res.status(400).send("Something went wrong!!", err.message);
+    res.status(400).send("Error occured " + err.message);
   }
 });
 
-// Delete API - DELETE/user - To delete the user
-app.delete("/user", async (req, res) => {
-  const userEmail = req.body.emailId.toLowerCase().trim();
-  console.log(userEmail);
-  try {
-    const user = await User.findOne({ emailId: userEmail });
-    if (!user) {
-      return res.status(404).send("User not found.");
-    }
-    await User.findByIdAndDelete(user._id);
-    res.send("User is deleted successfully.");
-  } catch (err) {
-    res.status(400).send("Something went wrong !!");
-  }
-});
-
-// Update API - PATCH/user - To update the user
-app.patch("/user/:userId", async (req, res) => {
-  const userId = req.params?.userId;
-  const { emailId, ...updateFields } = req.body;
-
-  const allowedUpdates = [
-    "photoUrl",
-    "about",
-    "gender",
-    "about",
-    "age",
-    "skills",
-  ];
-
-  try {
-    const updateKeys = Object.keys(updateFields);
-
-    const isUpdateAllowed = updateKeys.every((k) => {
-      return allowedUpdates.includes(k);
-    });
-
-    if (!isUpdateAllowed) {
-      return res.status(400).send("Update is not allowed.");
-    }
-
-    const user = await User.findOne({ emailId: emailId.toLowerCase().trim() });
-    if (!user) {
-      return res.status(404).send("User not found.");
-    }
-
-    if (updateFields.skills) {
-      await User.findByIdAndUpdate(
-        user._id,
-        { $addToSet: { skills: { $each: updateFields.skills } } },
-        { new: true, runValidators: true }
-      );
-    } else {
-      // If no 'skills' in updateFields, proceed with regular update
-      await User.findByIdAndUpdate(user._id, updateFields, {
-        new: true,
-        runValidators: true,
-      });
-    }
-
-    const updatedUser = await User.findByIdAndUpdate(user._id, updateFields, {
-      new: true,
-      runValidators: true,
-    });
-    res
-      .status(200)
-      .json({ message: "User is updated successfully.", user: updatedUser });
-  } catch (err) {
-    console.error("Update error:", err.message);
-    res.status(400).send("Something went wrong !!" + err.message);
-  }
+app.post("/sendConnectionRequest", userAuth, async (req, res) => {
+  const user = req.user;
+  console.log("Sending a connection request");
+  res.send(user.firstName + ` sent a connection request!!`);
 });
 
 connectDB()

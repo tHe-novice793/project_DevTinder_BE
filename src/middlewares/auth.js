@@ -1,21 +1,39 @@
-const adminAuth = (req, res, next) => {
-  const token = "xyz";
-  const isAdminAuthorized = token === "xyz";
-  if (!isAdminAuthorized) {
-    res.status(401).send("Unauthorized request");
-  } else {
+import jwt from "jsonwebtoken";
+import { configDotenv } from "dotenv";
+import { UserModel } from "../models/user.js";
+
+configDotenv();
+const User = UserModel;
+
+const userAuth = async (req, res, next) => {
+  try {
+    const { token } = req.cookies;
+
+    if (!token) {
+      return res.status(401).send("Unauthorized: No token provided");
+    }
+
+    const decodedObj = await jwt.verify(token, process.env.SECRET_KEY);
+
+    const { _id } = decodedObj;
+
+    const user = await User.findById(_id);
+    if (!user) {
+      return res.status(404).send("User not found");
+    }
+
+    req.user = user;
+
     next();
+  } catch (err) {
+    // Handle errors based on error type
+    if (err.name === "JsonWebTokenError") {
+      return res.status(400).send("Invalid token");
+    } else if (err.name === "TokenExpiredError") {
+      return res.status(401).send("Token expired");
+    }
+    res.status(500).send("Server error: " + err.message);
   }
 };
 
-const userAuth = (req, res, next) => {
-  const token = "xyz";
-  const isUserAuthorized = token === "xyz";
-  if (!isUserAuthorized) {
-    res.status(401).send("Unauthorized user request");
-  } else {
-    next();
-  }
-};
-
-export { adminAuth, userAuth };
+export { userAuth };
