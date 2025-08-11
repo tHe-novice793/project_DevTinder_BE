@@ -9,21 +9,22 @@ import { profileRouter } from "./routes/profile.js";
 dotenv.config();
 
 const app = express();
+const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 app.use(cookieParser());
 
-app.use("/", authRouter);
-app.use("/", profileRouter);
+app.use("/auth", authRouter);
+app.use("/profile", profileRouter);
 app.use("/request", requestRouter);
 
 connectDB()
   .then(() => {
     console.log("Database connection established...");
-    app.listen(3000, () => {
-      console.log("Server is running on 3000");
+    app.listen(PORT, () => {
+      console.log(`Server is running on ${PORT}`);
     });
   })
   .catch((err) => {
-    console.error("Database canot be connected!!");
+    console.error("Database cannot be connected!!" + err.message);
   });

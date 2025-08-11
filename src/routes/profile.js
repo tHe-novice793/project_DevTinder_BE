@@ -9,7 +9,7 @@ import bcrypt from "bcrypt";
 
 const profileRouter = express.Router();
 
-profileRouter.get("/profile/view", userAuth, async (req, res) => {
+profileRouter.get("/view", userAuth, async (req, res) => {
   try {
     const user = req.user;
     if (!user) {
@@ -21,7 +21,7 @@ profileRouter.get("/profile/view", userAuth, async (req, res) => {
   }
 });
 
-profileRouter.patch("/profile/edit", userAuth, async (req, res) => {
+profileRouter.patch("/edit", userAuth, async (req, res) => {
   try {
     // Validate the profile edit data
     const validation = validateProfileEditData(req);
@@ -58,7 +58,7 @@ profileRouter.patch("/profile/edit", userAuth, async (req, res) => {
   }
 });
 
-profileRouter.patch("/profile/editPassword", userAuth, async (req, res) => {
+profileRouter.patch("/editPassword", userAuth, async (req, res) => {
   try {
     const { emailId, password } = await validateEditPasswordData(req);
 

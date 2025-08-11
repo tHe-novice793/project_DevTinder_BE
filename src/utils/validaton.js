@@ -145,7 +145,26 @@ const validateEditPasswordData = async (req) => {
     emailId,
     password,
   };
-  
+};
+
+const validateSendConnectionRequest = async (req) => {
+  const { toUserId, status } = req.params;
+
+  // Validate the toUserId is a valid MongoDB ObjectId
+  if (!validator.isMongoId(toUserId)) {
+    throw new Error("Invalid User ID format.");
+  }
+
+  const validStatuses = ["ignored", "interested"];
+  if (!validStatuses.includes(status)) {
+    throw new Error(
+      `Invalid connection request status. Must be one of: ${validStatuses.join(
+        ", "
+      )}`
+    );
+  }
+
+  return { toUserId, status };
 };
 
 export {
@@ -153,4 +172,5 @@ export {
   validateLoginData,
   validateProfileEditData,
   validateEditPasswordData,
+  validateSendConnectionRequest,
 };
