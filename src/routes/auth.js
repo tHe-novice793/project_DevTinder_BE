@@ -2,6 +2,8 @@ import express from "express";
 import bcrypt from "bcrypt";
 import { UserModel } from "../models/user.js";
 import { validateLoginData, validateSignupData } from "../utils/validaton.js";
+import { userAuth } from "../middlewares/auth.js";
+import authenticateJWT from "../middlewares/authenticateJWT.js";
 
 const authRouter = express.Router();
 const User = UserModel;
@@ -41,8 +43,6 @@ authRouter.post("/login", async (req, res) => {
     }
     const isPasswordValid = await user.validatePassword(password);
 
-    console.log(user);
-
     if (isPasswordValid) {
       const token = await user.getJWT();
 
@@ -59,5 +59,21 @@ authRouter.post("/login", async (req, res) => {
     res.status(400).send("Error : " + err.message);
   }
 });
+
+// Logout API - POST/logout - To logout the user
+authRouter.post("/logout", authenticateJWT, async (req, res) => {
+  try {
+    const userFirstName = req.user ? req.user.firstName : "Guest";
+    res.cookie("token", null, {
+      expires: new Date(Date.now()),
+    });
+
+    res.send(`${userFirstName}, you have been logged out successfully.`);
+  } catch (err) {
+    res.status(400).send(`Error : ${err.message}`);
+  }
+});
+
+
 
 export { authRouter };
