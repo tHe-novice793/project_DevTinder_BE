@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 import { authRouter } from "./routes/auth.js";
 import { requestRouter } from "./routes/request.js";
 import { profileRouter } from "./routes/profile.js";
+import { userRouter } from "./routes/user.js";
 
 dotenv.config();
 
@@ -17,6 +18,7 @@ app.use(cookieParser());
 app.use("/auth", authRouter);
 app.use("/profile", profileRouter);
 app.use("/request", requestRouter);
+app.use("/user", userRouter);
 
 connectDB()
   .then(() => {
