@@ -167,10 +167,28 @@ const validateSendConnectionRequest = async (req) => {
   return { toUserId, status };
 };
 
+const validateReviewConnectionRequest = async (req) => {
+  const { requestId, status } = req.params;
+
+  if (!validator.isMongoId(requestId)) {
+    throw new Error("Invalid request ID format.");
+  }
+
+  const validStatuses = ["accepted", "rejected"];
+  if (!validStatuses.includes(status)) {
+    throw new Error(
+      `Invalid status. Must be one of: ${validStatuses.join(", ")}`
+    );
+  }
+
+  return { requestId, status };
+};
+
 export {
   validateSignupData,
   validateLoginData,
   validateProfileEditData,
   validateEditPasswordData,
   validateSendConnectionRequest,
+  validateReviewConnectionRequest,
 };

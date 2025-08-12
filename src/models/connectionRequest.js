@@ -21,6 +21,10 @@ const connectionRequestSchema = new mongoose.Schema(
       },
       default: "interested",
     },
+    matchedAt: {
+      type: Date,
+      default: null,
+    },
   },
   { timestamps: true }
 );
@@ -32,7 +36,7 @@ connectionRequestSchema.pre("save", function (next) {
   const connectionRequest = this;
   // Check if the formUserId is same as toUserId
   if (this.fromUserId.equals(this.toUserId)) {
-    return next(new Error("User cannot send request to themseleves."));
+    return next(new Error("User cannot send request to themselves."));
   }
   next();
 });
