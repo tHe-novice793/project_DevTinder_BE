@@ -113,6 +113,7 @@ const userSchema = new mongoose.Schema(
 );
 
 userSchema.index({ firstName: 1, lastName: 1 });
+userSchema.index({ firstName: "text", lastName: "text", skills: "text" });
 
 userSchema.methods.getJWT = async function () {
   const user = this;

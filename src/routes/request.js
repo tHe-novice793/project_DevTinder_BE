@@ -11,11 +11,10 @@ const requestRouter = express.Router();
 
 const statusMessages = {
   interested: "showed interest in",
-  accepted: "accepted",
-  rejected: "rejected",
   ignored: "ignored",
+  accepted: "matched with",
+  rejected: "rejected",
 };
-
 requestRouter.post("/send/:status/:toUserId", userAuth, async (req, res) => {
   try {
     // Validate request parameters using the validation utility
