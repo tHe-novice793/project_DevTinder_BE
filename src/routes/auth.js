@@ -2,7 +2,6 @@ import express from "express";
 import bcrypt from "bcrypt";
 import { UserModel } from "../models/user.js";
 import { validateLoginData, validateSignupData } from "../utils/validaton.js";
-import { userAuth } from "../middlewares/auth.js";
 import authenticateJWT from "../middlewares/authenticateJWT.js";
 
 const authRouter = express.Router();
@@ -25,9 +24,12 @@ authRouter.post("/signup", async (req, res) => {
       password: paswordHash,
     });
     await user.save();
-    res.send("User added successfully");
+    res.json({ success: true, message: "User added successfully" , data: user});
   } catch (err) {
-    res.status(400).send("Error while saving the user: " + err.message);
+    res.status(400).json({
+      success: false,
+      message: "Error while saving user data . ERROR: " + err.message,
+    });
   }
 });
 
@@ -51,12 +53,16 @@ authRouter.post("/login", async (req, res) => {
         // httpOnly: true,
       });
 
-      res.send(`User login successful! Hello, ${user.firstName}`);
+      res.json({
+        success: true,
+        message: `User login successful! Hello, ${user.firstName}`,
+        data: user
+      });
     } else {
       throw new Error("Invalid login credentials");
     }
   } catch (err) {
-    res.status(400).send("Error : " + err.message);
+    res.status(400).json({ success: false, message: err.message });
   }
 });
 
@@ -68,12 +74,13 @@ authRouter.post("/logout", authenticateJWT, async (req, res) => {
       expires: new Date(Date.now()),
     });
 
-    res.send(`${userFirstName}, you have been logged out successfully.`);
+    res.json({
+      success: true,
+      message: `${userFirstName} logged out successfully.`,
+    });
   } catch (err) {
-    res.status(400).send(`Error : ${err.message}`);
+    res.status(400).json({ success: false, message: err.message, data: null});
   }
 });
-
-
 
 export { authRouter };

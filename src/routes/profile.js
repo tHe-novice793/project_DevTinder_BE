@@ -15,9 +15,13 @@ profileRouter.get("/view", userAuth, async (req, res) => {
     if (!user) {
       throw new Error("User does not exist");
     }
-    res.send("User is : " + user);
+    res.json({
+      success: true,
+      message: "Profile fetched successfully",
+      data: user,
+    });
   } catch (err) {
-    res.status(400).send("Error occured " + err.message);
+    res.status(400).json({ success: false, message: err.message });
   }
 });
 
@@ -50,11 +54,12 @@ profileRouter.patch("/edit", userAuth, async (req, res) => {
     }
 
     res.json({
+      success: true,
       message: `${updatedUser.firstName}, your profile updated successfully`,
       data: updatedUser,
     });
   } catch (err) {
-    res.status(400).send(`Error: ${err.message}`);
+    res.status(400).json({ success: false, message: err.message });
   }
 });
 
@@ -72,10 +77,14 @@ profileRouter.patch("/editPassword", userAuth, async (req, res) => {
       { password: newPassword },
       { new: true }
     );
-    res.send({ message: "Password changed successfully!", user: updatedUser });
+    res.json({
+      success: true,
+      message: "Password changed successfully!",
+      user: updatedUser,
+    });
   } catch (err) {
     // Handle errors, e.g., user not found, invalid password, etc.
-    res.status(400).send(`ERROR: ${err.message}`);
+    res.status(400).json({ success: false, message: err.message });
   }
 });
 

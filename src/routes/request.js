@@ -15,6 +15,7 @@ const statusMessages = {
   accepted: "matched with",
   rejected: "rejected",
 };
+
 requestRouter.post("/send/:status/:toUserId", userAuth, async (req, res) => {
   try {
     // Validate request parameters using the validation utility
@@ -52,17 +53,18 @@ requestRouter.post("/send/:status/:toUserId", userAuth, async (req, res) => {
     const data = await connectionRequest.save();
 
     res.json({
+      success: true,
       message: `${req.user.firstName} ${statusMessages[status]} ${userExists.firstName}`,
       data,
     });
   } catch (err) {
-    // Handle duplicate request error
     if (err.code === 11000) {
-      // 11000 is the error code for duplicate key errors
-      res.status(400).send("ERROR: Connection request already exists.");
-    } else {
-      res.status(400).send(`ERROR: ${err.message}`);
+      return res.status(400).json({
+        success: false,
+        message: "Connection request already exists.",
+      });
     }
+    res.status(400).json({ success: false, message: err.message });
   }
 });
 
@@ -97,9 +99,10 @@ requestRouter.post("/review/:status/:requestId", userAuth, async (req, res) => {
     });
 
     if (wasIgnoredBySender) {
-      return res
-        .status(403)
-        .send("This connection request is no longer available.");
+      return res.status(403).json({
+        success: false,
+        message: "This connection request is no longer available.",
+      });
     }
 
     // Update the request status
@@ -112,9 +115,11 @@ requestRouter.post("/review/:status/:requestId", userAuth, async (req, res) => {
     }
     const data = await connectionRequest.save();
 
-    res.status(200).json({ message: `Connection request ${status}.`, data });
+    res
+      .status(200)
+      .json({ success: true, message: `Connection request ${status}.`, data });
   } catch (err) {
-    res.status(400).send("ERROR: " + err.message);
+    res.status(400).json({ success: false, message: err.message });
   }
 });
 

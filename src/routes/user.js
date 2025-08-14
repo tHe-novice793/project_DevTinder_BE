@@ -18,11 +18,12 @@ userRouter.get("/requests/received", userAuth, async (req, res) => {
     }).populate("fromUserId", USER_SAFE_DATA);
 
     res.json({
-      message: "Connection request are fetched",
+      success: true,
+      message: "Connection requests fetched",
       data: connectionRequests,
     });
   } catch (err) {
-    res.status(400).send("ERROR: " + err.message);
+    res.status(400).json({ success: false, message: err.message });
   }
 });
 
@@ -48,9 +49,9 @@ userRouter.get("/connection", userAuth, async (req, res) => {
       return row.fromUserId;
     });
 
-    res.json({ connections });
+    res.json({ success: true, data: connections });
   } catch (err) {
-    res.status(400).send({ message: err.message });
+    res.status(400).json({ success: false, message: err.message });
   }
 });
 
