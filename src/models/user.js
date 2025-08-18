@@ -82,6 +82,8 @@ const userSchema = new mongoose.Schema(
     },
     photoUrl: {
       type: String,
+      default:
+        "https://img.freepik.com/free-psd/contact-icon-illustration-isolated_23-2151903337.jpg?semt=ais_hybrid&w=740&q=80",
       validate: {
         validator: function (v) {
           if (!validator.isURL(v)) {

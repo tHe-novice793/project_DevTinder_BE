@@ -24,7 +24,7 @@ authRouter.post("/signup", async (req, res) => {
       password: paswordHash,
     });
     await user.save();
-    res.json({ success: true, message: "User added successfully" , data: user});
+    res.json({ success: true, message: "User added successfully", data: user });
   } catch (err) {
     res.status(400).json({
       success: false,
@@ -50,13 +50,15 @@ authRouter.post("/login", async (req, res) => {
 
       res.cookie("token", token, {
         expires: new Date(Date.now() + 7 * 24 * 3600000),
-        // httpOnly: true,
+        httpOnly: true,
+        sameSite: "lax",
+        secure: false,
       });
 
       res.json({
         success: true,
         message: `User login successful! Hello, ${user.firstName}`,
-        data: user
+        data: user,
       });
     } else {
       throw new Error("Invalid login credentials");
@@ -79,7 +81,7 @@ authRouter.post("/logout", authenticateJWT, async (req, res) => {
       message: `${userFirstName} logged out successfully.`,
     });
   } catch (err) {
-    res.status(400).json({ success: false, message: err.message, data: null});
+    res.status(400).json({ success: false, message: err.message, data: null });
   }
 });
 
