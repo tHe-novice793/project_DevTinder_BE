@@ -34,6 +34,7 @@ profileRouter.patch("/edit", userAuth, async (req, res) => {
     }
 
     const loggedInUser = req.user;
+    console.log("Incoming update data:", req.body);
     const updateData = {};
 
     for (let key of Object.keys(req.body)) {
@@ -41,6 +42,8 @@ profileRouter.patch("/edit", userAuth, async (req, res) => {
         updateData[key] = req.body[key];
       }
     }
+
+     console.log("Filtered update data:", updateData);
 
     // Update the user's profile in the database
     const updatedUser = await UserModel.findByIdAndUpdate(
@@ -52,6 +55,8 @@ profileRouter.patch("/edit", userAuth, async (req, res) => {
     if (!updatedUser) {
       throw new Error("User not found or failed to update profile.");
     }
+    
+    console.log("Updated user:", updatedUser);
 
     res.json({
       success: true,

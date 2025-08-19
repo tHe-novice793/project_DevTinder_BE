@@ -9,26 +9,55 @@ const User = UserModel;
 
 // SignUp API - POST/signup - To sign up the user
 authRouter.post("/signup", async (req, res) => {
+  const token = req.cookies?.token;
+
+  // ✅ Block signup if already logged in
+  if (token) {
+    try {
+      jwt.verify(token, process.env.SECRET_KEY);
+      return res
+        .status(403)
+        .json({ success: false, message: "Already logged in." });
+    } catch (err) {
+      // Token invalid — allow signup
+      console.log("Invalid token during signup check:", err.message);
+    }
+  }
+
   try {
-    // Validation of data
+    // ✅ Validate input
     validateSignupData(req);
 
-    // Encrypt the password
     const { firstName, lastName, emailId, password } = req.body;
-    const paswordHash = await bcrypt.hash(password, 10);
+
+    const passwordHash = await bcrypt.hash(password, 10);
 
     const user = new User({
       firstName,
       lastName,
       emailId,
-      password: paswordHash,
+      password: passwordHash,
     });
-    await user.save();
-    res.json({ success: true, message: "User added successfully", data: user });
+
+    const savedUser = await user.save();
+    const token = await savedUser.getJWT();
+
+    res.cookie("token", token, {
+      expires: new Date(Date.now() + 12 * 3600000),
+      httpOnly: true,
+      sameSite: "lax",
+      secure: false,
+    });
+
+    res.status(201).json({
+      success: true,
+      message: "User registered successfully",
+      data: savedUser,
+    });
   } catch (err) {
     res.status(400).json({
       success: false,
-      message: "Error while saving user data . ERROR: " + err.message,
+      message: "Error during signup: " + err.message,
     });
   }
 });
@@ -49,7 +78,7 @@ authRouter.post("/login", async (req, res) => {
       const token = await user.getJWT();
 
       res.cookie("token", token, {
-        expires: new Date(Date.now() + 7 * 24 * 3600000),
+        expires: new Date(Date.now() + 12 * 3600000),
         httpOnly: true,
         sameSite: "lax",
         secure: false,

@@ -31,6 +31,10 @@ userRouter.get("/connection", userAuth, async (req, res) => {
   try {
     const loggedInUserId = req.user._id;
 
+    const page = parseInt(req.query.page) || 1;
+    const limit = Math.min(parseInt(req.query.limit) || 10, 50); // Limit max to 50
+    const skip = (page - 1) * limit;
+
     const connectionRequests = await ConnectionRequestModel.find({
       $or: [
         { toUserId: loggedInUserId, status: "accepted" },
@@ -42,14 +46,23 @@ userRouter.get("/connection", userAuth, async (req, res) => {
       .lean();
 
     const connections = connectionRequests.map((row) => {
-      // Return the user on the other side of the connection
       if (row.fromUserId._id.toString() === loggedInUserId.toString()) {
         return row.toUserId;
       }
       return row.fromUserId;
     });
 
-    res.json({ success: true, data: connections });
+    // Paginate the result manually after mapping
+    const paginatedConnections = connections.slice(skip, skip + limit);
+
+    res.json({
+      success: true,
+      page,
+      limit,
+      count: paginatedConnections.length,
+      hasMore: skip + limit < connections.length,
+      data: paginatedConnections,
+    });
   } catch (err) {
     res.status(400).json({ success: false, message: err.message });
   }
