@@ -6,6 +6,7 @@ import {
   validateReviewConnectionRequest,
   validateSendConnectionRequest,
 } from "../utils/validaton.js";
+import { run } from "../utils/sendEmail.js";
 
 const requestRouter = express.Router();
 
@@ -15,6 +16,8 @@ const statusMessages = {
   accepted: "matched with",
   rejected: "rejected",
 };
+
+const sendEmail = run();
 
 requestRouter.post("/send/:status/:toUserId", userAuth, async (req, res) => {
   try {
@@ -51,6 +54,9 @@ requestRouter.post("/send/:status/:toUserId", userAuth, async (req, res) => {
 
     // Save the request to the database
     const data = await connectionRequest.save();
+
+    const emailRes = await sendEmail.run();
+    console.log(emailRes)
 
     res.json({
       success: true,
